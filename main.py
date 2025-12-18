@@ -1,45 +1,25 @@
 import os
-from typing import List
 
 from dotenv import load_dotenv
-from langchain.agents import create_agent
-from langchain.tools import tool
-from langchain_core.messages import HumanMessage
-from langchain_openai import ChatOpenAI
-from langchain_tavily import TavilySearch
-from pydantic import BaseModel, Field
 
 load_dotenv()
 
+from langchain.agents import create_agent
+from langchain_openai import ChatOpenAI
+from langchain_tavily import TavilySearch
 
-class source(BaseModel):
-    """schema for the source of the job posting"""
-
-    url: str = Field(description="the url of the source")
-
-
-class AgentResponse(BaseModel):
-    """Schema for the response of the agent"""
-
-    answer: str = Field(description="the agents answer to the query")
-    sources: List[source] = Field(
-        default_factory=list, description="the list of sources used to answer the query"
-    )
-
-
-llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
 tools = [TavilySearch()]
-agent = create_agent(model=llm, tools=tools, response_format=AgentResponse)
+
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+agent = create_agent(llm, tools)  # Creates an agent graph
+
+chain = agent
 
 
 def main():
-    result = agent.invoke(
+    result = chain.invoke(
         {
-            "messages": [
-                HumanMessage(
-                    content="search for 3 job posting for a software engineering intern in the San Francisco Bay Area on linkedin and list all of there details"
-                )
-            ]
+            "messages": [("user", "find me 3 of the newest software engineering internships positions in the United States, you can only use twitter to find the information")]
         }
     )
     print(result)
